@@ -1,0 +1,83 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>US Home Decor Buyer Finder & Mailer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+  <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">US Home Decor Buyer Finder API</h1>
+    <p class="text-sm text-gray-500 mb-6">Real-time buyer lead search & direct email integration</p>
+
+    <!-- Search Section -->
+    <div class="flex gap-4 mb-6">
+      <input id="searchInput" type="text" value="Home Decor Retailers New York" placeholder="e.g. Home Decor Retailers USA" 
+             class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+      <button onclick="searchBuyers()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700">
+        Search Buyers
+      </button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Dynamic buyer cards will render here -->
+    </div>
+  </div>
+
+  <script>
+    async function searchBuyers() {
+      const query = document.getElementById('searchInput').value;
+      const container = document.getElementById('results');
+      container.innerHTML = '<p class="text-gray-500 col-span-2">Fetching buyers dynamically via API...</p>';
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/search-buyers?query=${encodeURIComponent(query)}`);
+        const buyers = await res.json();
+        
+        container.innerHTML = '';
+        buyers.forEach(buyer => {
+          container.innerHTML += `
+            <div class="border border-gray-200 p-4 rounded-lg shadow-sm bg-gray-50">
+              <h3 class="font-bold text-lg text-gray-800">${buyer.name}</h3>
+              <p class="text-xs text-blue-600 truncate mb-1"><a href="${buyer.website}" target="_blank">${buyer.website}</a></p>
+              <p class="text-sm text-gray-600 mb-3">Email: <span class="font-mono bg-gray-200 px-1 rounded">${buyer.email}</span></p>
+              <button onclick="sendMail('${buyer.email}', '${buyer.name}')" 
+                      class="bg-green-600 text-white text-sm px-4 py-1.5 rounded hover:bg-green-700">
+                Send Outreach Mail
+              </button>
+            </div>
+          `;
+        });
+      } catch (err) {
+        container.innerHTML = '<p class="text-red-500">Error fetching buyers.</p>';
+      }
+    }
+
+    async function sendMail(email, name) {
+      alert(`Sending email via Nodemailer API to: ${email}`);
+      try {
+        const res = await fetch('http://localhost:5000/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            buyerEmail: email,
+            buyerName: name,
+            sellerCatalogUrl: 'https://example-homedecor-catalog.com'
+          })
+        });
+        const data = await res.json();
+        alert(data.message);
+      } catch (err) {
+        alert('Failed to send email');
+      }
+    }
+
+    // Initial search on load
+    searchBuyers();
+  </script>
+</body>
+</html>
+
